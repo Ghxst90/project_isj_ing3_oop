@@ -37,7 +37,7 @@ class Routeur(Equipement):
 
     def __init__(self, nom, marque, adresse_ip):
         super().__init__(nom, marque, adresse_ip)
-        self._table_routage = {}  # { destination : prochain_saut }
+        self._table_routage = {} 
 
     def ajouter_route(self, destination, prochain_saut):
         """Ajoute une route dans la table de routage."""
