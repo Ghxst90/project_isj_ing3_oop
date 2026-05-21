@@ -87,8 +87,11 @@ git push origin group_1
 Depuis votre fork, ouvrir une **Merge Request** vers la branche `main` du
 dépôt officiel `st9-8/project_isj_ing3_oop`.
 
-- **Titre :** `[Groupe X] SIMNet — NomDuGroupe`
-- **Description :** fonctionnalités implémentées, noms des membres, remarques éventuelles
+- **Titre :** `[Groupe 2] SIMNet — Groupe2`
+ - **Description :** 
+ - Fonctionnalités implémentées,
+ - Noms des membres:AROUNG Ralph Stephane Darell(chef),ESSIE ABWA David Erwann, NGANKAK DZUKOU Louis-Georges,GODSWILL CHONGSI Junior, TAMBO DJOUONTZO Stephen Darren
+ - Remarques éventuelles: il n'y a pas de dépendance externe , le code se lance à travers la commande python src/main.py
 
 > Ne pas merger la Merge Request vous-même. Elle sera consultée et validée
 > par l'examinateur lors de la correction.
@@ -97,13 +100,13 @@ dépôt officiel `st9-8/project_isj_ing3_oop`.
 
 ## Modules fonctionnels
 
-| Module | Description |
-|--------|-------------|
-| 1 — Modélisation | Équipements réseau, topologie, liens |
-| 2 — Trafic | Paquets, routage saut par saut, statistiques |
-| 3 — Sécurité | Firewall, règles de filtrage, journal horodaté |
-| 4 — Surveillance | Moniteur réseau, métriques, export rapport |
-| 5 — Interface | Menu console interactif |
+| Module | Description |Statut|
+|--------|-------------|-------|
+| 1 — Modélisation | Équipements réseau, topologie, liens |Terminé|
+| 2 — Trafic | Paquets, routage saut par saut, statistiques |Terminé|
+| 3 — Sécurité | Firewall, règles de filtrage, journal horodaté |En cours|
+| 4 — Surveillance | Moniteur réseau, métriques, export rapport |En cours|
+| 5 — Interface | Menu console interactif |En cours|
 
 ---
 
@@ -112,7 +115,7 @@ dépôt officiel `st9-8/project_isj_ing3_oop`.
 | Branche | Groupe | Membres |
 |---------|--------|---------|
 | `group_1` | — | — |
-| `group_2` | — | — |
+| `group_2` | Groupe 2| AROUNG Ralph Stephane Darell,NGANKAK DZUKOU Louis-Georges,ESSIE ABWA David Erwann,GODSWILL CHONGSI Junior,TAMBO DJOUONTZO Stephen Darren|
 | `group_3` | — | — |
 | `group_4` | — | — |
 | `group_5` | — | — |
@@ -139,3 +142,5 @@ dépôt officiel `st9-8/project_isj_ing3_oop`.
 **M. Stephane Fedim**  
 Institut Saint Jean - Parcours Ingénieur
 Année académique 2025-2026 · Semestre 2
+
+
