@@ -1,9 +1,3 @@
-import sys
-import os
-
-# Ajoute src/ au chemin Python pour que les imports fonctionnent
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 from equipements import Routeur, Switch, Serveur, Firewall, PointAccesWifi, Terminal
 from topologie   import Topologie, Lien
 from paquets     import Paquet, Simulateur
