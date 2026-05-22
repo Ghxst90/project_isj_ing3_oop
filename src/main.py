@@ -9,14 +9,14 @@ def saisir_int(message, mini=None, maxi=None):
         try:
             valeur = int(input(message))
             if mini is not None and valeur < mini:
-                print(f"   Valeur minimale : {mini}")
+                print(f"  Valeur minimale : {mini}")
                 continue
             if maxi is not None and valeur > maxi:
-                print(f"   Valeur maximale : {maxi}")
+                print(f"  Valeur maximale : {maxi}")
                 continue
             return valeur
         except ValueError:
-            print("   Veuillez entrer un nombre entier.")
+            print("  Veuillez entrer un nombre entier.")
 
 
 def saisir_non_vide(message):
@@ -25,7 +25,7 @@ def saisir_non_vide(message):
         valeur = input(message).strip()
         if valeur:
             return valeur
-        print("   Ce champ ne peut pas être vide.")
+        print("  Ce champ ne peut pas être vide.")
 
 
 def saisir_texte_strict(message, longueur_min=2):
@@ -53,6 +53,29 @@ def saisir_ip(message):
         print("   Format d'adresse IP invalide. Veuillez entrer un format valide (ex: 192.168.1.1).")
 
 
+def saisir_identifiant_strict(message, type_champ="Identifiant", longueur_min=4):
+    """Force un format d'identifiant ou de SSID sécurisé (pas uniquement des chiffres, longueur min)."""
+    while True:
+        valeur = input(message).strip()
+        if len(valeur) < longueur_min:
+            print(f"  {type_champ} trop court (min {longueur_min} caractères).")
+            continue
+        if valeur.isdigit():
+            print(f"  {type_champ} invalide : ne doit pas contenir uniquement des chiffres.")
+            continue
+        return valeur
+
+
+def saisir_mot_de_passe_strict(message, longueur_min=6):
+    """Force un niveau de sécurité minimal pour le mot de passe du Firewall."""
+    while True:
+        valeur = input(message).strip()
+        if len(valeur) < longueur_min:
+            print(f"   Mot de passe trop faible (min {longueur_min} caractères pour la sécurité).")
+            continue
+        return valeur
+
+
 def menu_ajouter_equipement(topologie):
     """Ajoute un équipement à la topologie avec validations strictes."""
     print("\n  Types disponibles :")
@@ -77,12 +100,14 @@ def menu_ajouter_equipement(topologie):
         elif choix == 3:
             eq = Serveur(nom, marque, ip)
         elif choix == 4:
-            login = saisir_non_vide("  Login     : ")
-            mdp   = saisir_non_vide("  Mot de passe : ")
+            # Contraintes renforcées sur le Login (admin, etc.) et le Mot de passe
+            login = saisir_identifiant_strict("  Login admin   : ", "Le login", longueur_min=4)
+            mdp   = saisir_mot_de_passe_strict("  Mot de passe  : ", longueur_min=8)
             eq = Firewall(nom, marque, ip, login, mdp)
         elif choix == 5:
-            ssid  = saisir_non_vide("  SSID  : ")
-            canal = saisir_int("  Canal (1-13) : ", 1, 13)
+            # Contraintes renforcées sur le SSID (ex: "WiFi-ISJ")
+            ssid  = saisir_identifiant_strict("  SSID (Nom Wi-Fi) : ", "Le SSID", longueur_min=3)
+            canal = saisir_int("  Canal (1-13)     : ", 1, 13)
             eq = PointAccesWifi(nom, marque, ip, ssid, canal)
         elif choix == 6:
             eq = Terminal(nom, marque, ip)
@@ -150,7 +175,7 @@ def menu_envoyer_paquet(simulateur):
         protocole = saisir_non_vide("  Protocole      : ").upper()
         if protocole in ["TCP", "UDP", "ICMP"]:
             break
-        print("   Protocole invalide. Utilisez uniquement TCP, UDP ou ICMP.")
+        print("  Protocole invalide. Utilisez uniquement TCP, UDP ou ICMP.")
 
     taille   = saisir_int("  Taille (octets)  : ", mini=1)
     priorite = saisir_int("  Priorité (1-5)   : ", mini=1, maxi=5)
@@ -162,19 +187,20 @@ def menu_envoyer_paquet(simulateur):
     
     print("\n" + "="*15 + " DÉBUT DE LA SIMULATION RÉSEAU " + "="*15)
     
-    # Sécurisation contre les équipements sources/destinations introuvables
     try:
         simulateur.envoyer_paquet(paquet, nom_source, nom_dest)
     except KeyError as e:
-        print(f"\n   ERREUR DE ROUTAGE : L'équipement {e} n'existe pas dans la topologie actuelle.")
+        print(f"\n  ERREUR DE ROUTAGE : L'équipement {e} n'existe pas dans la topologie actuelle.")
         print("  Vérifiez les noms saisis ou affichez la topologie (Option 5) pour contrôler.")
     except Exception as e:
-        print(f"\n   ERREUR INCONNUE lors de la simulation : {e}")
+        print(f"\n  ERREUR INCONNUE lors de la simulation : {e}")
 
     print("=" * 61)
         
     print("-" * 50)
     input("  Simulation terminée. Appuyez sur ENTRÉE pour revenir au menu principal...")
+
+
 def menu_statistiques(simulateur):
     """Affiche les statistiques de simulation."""
     print("\n" + "-"*18 + " STATISTIQUES GLOBALES " + "-"*18)
