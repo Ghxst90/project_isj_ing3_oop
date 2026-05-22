@@ -1,6 +1,6 @@
 import ipaddress
 import datetime
- 
+
 class RegleFiltrage:
     """
     Représente une règle de filtrage réseau.
@@ -95,4 +95,104 @@ class JournalSecurite:
         
         
         
-        
+class GestionnaireFirewall:
+    
+      """
+    Orchestre la securite du reseau :
+    - Authentification administrateur (login / mot de passe)
+    - Gestion des regles de filtrage (ajout, suppression, affichage)
+    - Inspection des paquets (algorithme first-match)
+    - Journalisation horodatee de chaque decision
+    """
+ 
+def __init__(self, firewall):
+        self.__firewall = firewall # objet Firewall (equipements.py)
+        self.__regles = [] # list[RegleFiltrage]
+        self.__journal = JournalSecurite()
+        self.__authentifie = False
+ 
+    #  Authentification 
+def authentifier(self, login, mdp):
+        """Verifie login/mdp contre les credentials du Firewall. Retourne bool."""
+        if (login == self.__firewall.get_login() and
+                mdp == self.__firewall.get_mot_de_passe()):
+            self.__authentifie = True
+            print(f"[FIREWALL] Authentification reussie pour '{login}'.")
+            return True
+        print("[FIREWALL] Echec : identifiants incorrects.")
+        return False
+ 
+def deconnecter(self):
+        """Ferme la session administrateur."""
+        self.__authentifie = False
+        print("[FIREWALL] Session administrateur fermee.")
+ 
+    #  Gestion des regles 
+def ajouter_regle(self, regle):
+        """Ajoute une RegleFiltrage. Necessite une session authentifiee."""
+        if not self.__authentifie:
+            print("[FIREWALL] Acces refuse. Authentifiez-vous d'abord.")
+            return
+        self.__regles.append(regle)
+        print(f"[FIREWALL] Regle ajoutee : {regle}")
+ 
+def supprimer_regle(self, index):
+        """Supprime la regle a l'index donne."""
+        if not self.__authentifie:
+            print("[FIREWALL] Acces refuse.")
+            return
+        if 0 <= index < len(self.__regles):
+            supprimee = self.__regles.pop(index)
+            print(f"[FIREWALL] Regle supprimee : {supprimee}")
+        else:
+            print(f"[FIREWALL] Index invalide ({index}).")
+ 
+def afficher_regles(self):
+        """Affiche toutes les regles actives numerotees."""
+        print(f"\n-- Regles du Firewall '{self.__firewall.get_nom()}' --")
+        if not self.__regles:
+            print(" (aucune regle definie)")
+        for i, r in enumerate(self.__regles):
+            print(f" [{i}] {r}")
+        print()
+ 
+    #  Inspection des paquets (first-match) 
+def inspecter_paquet(self, paquet):
+        """
+        Parcourt les regles dans l'ordre d'insertion.
+        La premiere regle dont correspond(paquet)==True s'applique.
+        Si aucune regle ne correspond, la politique par defaut est AUTORISER.
+        Retourne : 'AUTORISER' ou 'BLOQUER'
+        """
+        for regle in self.__regles:
+            if regle.correspond(paquet):
+                action = regle.get_action()
+                self.__journal.enregistrer(
+                    action, paquet, raison=f"Regle: {regle}")
+                print(f"[FIREWALL] {self.__firewall.get_nom()} "
+                      f"=> {action} | {paquet}")
+                return action
+ 
+        # Aucune regle ne correspond => politique par defaut : AUTORISER
+        self.__journal.enregistrer(
+            "AUTORISER", paquet, raison="Aucune regle applicable (defaut)")
+        print(f"[FIREWALL] {self.__firewall.get_nom()} "
+              f"=> AUTORISER (defaut) | {paquet}")
+        return "AUTORISER"
+ 
+    #  Journal
+def afficher_journal(self):
+        """Affiche le journal complet du firewall."""
+        self.__journal.afficher()
+ 
+def exporter_journal(self, chemin="rapport_simnet.txt"):
+        """Exporte le journal dans un fichier texte."""
+        self.__journal.exporter(chemin)
+ 
+def get_journal(self):
+        """Retourne l'objet JournalSecurite (pour le Moniteur, Membre 4)."""
+        return self.__journal
+ 
+def get_firewall(self):
+        """Retourne l'objet Firewall associe."""
+        return self.__firewall        
