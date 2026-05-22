@@ -25,6 +25,7 @@ class Moniteur:
     
 
  
+
 def enregistrer_paquet(self, statut, paquet, chemin=None):
         """
         :param statut: 'OK' ou 'PERDU'
@@ -47,3 +48,70 @@ def __cle_lien(self, nom1, nom2):
         return f'{a}<->{b}'
 
 
+
+def get_stats_equipement(self, nom):
+        """Retourne {"transmis": n, "perdus": n} pour un équipement."""
+        return dict(self.__stats_eq[nom])
+ 
+def get_utilisation_lien(self, nom1, nom2):
+        """Retourne les octets cumulés sur un lien."""
+        return self.__utilisation_liens[self.__cle_lien(nom1, nom2)]
+ 
+def get_equipements_actifs(self):
+        """Liste des équipements actuellement actifs."""
+        return [
+            nom for nom, eq in self.__topologie.get_equipements().items()
+            if eq.est_actif()
+        ]
+ 
+def get_equipements_inactifs(self):
+        """Liste des équipements actuellement inactifs."""
+        return [
+            nom for nom, eq in self.__topologie.get_equipements().items()
+            if not eq.est_actif()
+        ]
+ 
+def get_historique(self):
+        """Retourne les 10 derniers paquets du simulateur."""
+        return self.__simulateur.get_historique()[-10:]
+
+
+
+def afficher_tableau_bord(self):
+        """Affiche un tableau de bord récapitulatif dans la console."""
+        print('\n' + '=' * 55)
+        print('        TABLEAU DE BORD — SIMNet MONITEUR')
+        print('=' * 55)
+ 
+        print('\n--- Équipements actifs ---')
+        actifs = self.get_equipements_actifs()
+        if actifs:
+            for nom in actifs:
+                s = self.__stats_eq[nom]
+                print(f"  [✓] {nom:20s}  transmis={s['transmis']}  perdus={s['perdus']}")
+        else:
+            print('  (aucun)')
+ 
+        print('\n--- Équipements inactifs ---')
+        inactifs = self.get_equipements_inactifs()
+        if inactifs:
+            for nom in inactifs:
+                print(f'  [✗] {nom}')
+        else:
+            print('  (aucun)')
+ 
+        print('\n--- Utilisation des liens ---')
+        if self.__utilisation_liens:
+            for lien_cle, octets in self.__utilisation_liens.items():
+                print(f'  {lien_cle:35s}  {octets:>10.0f} octets')
+        else:
+            print('  (aucun trafic enregistré)')
+ 
+        print('\n--- Historique des 10 derniers paquets ---')
+        historique = self.get_historique()
+        if historique:
+            for statut, paquet in historique:
+                print(f'  [{statut:5s}] {paquet}')
+        else:
+            print('  (aucun paquet)')
+            print('\n' + '=' * 55 + '\n')
