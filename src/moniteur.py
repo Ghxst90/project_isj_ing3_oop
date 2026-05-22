@@ -22,9 +22,10 @@ class Moniteur:
         self.__stats_eq   = defaultdict(lambda: {'transmis': 0, 'perdus': 0})
         self.__utilisation_liens = defaultdict(float)
         self.__debut = datetime.datetime.now()
- 
+    
 
-     def enregistrer_paquet(self, statut, paquet, chemin=None):
+ 
+def enregistrer_paquet(self, statut, paquet, chemin=None):
         """
         :param statut: 'OK' ou 'PERDU'
         :param paquet: instance de Paquet
@@ -40,8 +41,9 @@ class Moniteur:
         else:
             self.__stats_eq[paquet.get_source()]['perdus'] += 1
  
-    def __cle_lien(self, nom1, nom2):
+def __cle_lien(self, nom1, nom2):
         """Clé canonique pour un lien (ordre alphabétique)."""
         a, b = sorted([nom1, nom2])
         return f'{a}<->{b}'
+
 
