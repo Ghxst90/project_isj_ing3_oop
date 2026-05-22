@@ -23,4 +23,25 @@ class Moniteur:
         self.__utilisation_liens = defaultdict(float)
         self.__debut = datetime.datetime.now()
  
-    # TODO : ajouter les méthodes dans les tâches suivantes
+
+     def enregistrer_paquet(self, statut, paquet, chemin=None):
+        """
+        :param statut: 'OK' ou 'PERDU'
+        :param paquet: instance de Paquet
+        :param chemin: liste ordonnée de noms d'équipements (ou None)
+        """
+        if statut == 'OK':
+            if chemin:
+                for nom in chemin:
+                    self.__stats_eq[nom]['transmis'] += 1
+                for i in range(len(chemin) - 1):
+                    cle = self.__cle_lien(chemin[i], chemin[i + 1])
+                    self.__utilisation_liens[cle] += paquet.get_taille()
+        else:
+            self.__stats_eq[paquet.get_source()]['perdus'] += 1
+ 
+    def __cle_lien(self, nom1, nom2):
+        """Clé canonique pour un lien (ordre alphabétique)."""
+        a, b = sorted([nom1, nom2])
+        return f'{a}<->{b}'
+
