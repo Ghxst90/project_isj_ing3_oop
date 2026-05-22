@@ -143,6 +143,7 @@ def afficher_menu():
     print("  -- Simulation --")
     print("  6. Envoyer un paquet")
     print("  7. Afficher les statistiques")
+    print("-"*50)
     print("  0. Quitter")
     print("=" * 50)
 
