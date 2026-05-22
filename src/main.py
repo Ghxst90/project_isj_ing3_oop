@@ -2,6 +2,7 @@ from equipements import Routeur, Switch, Serveur, Firewall, PointAccesWifi, Term
 from topologie   import Topologie, Lien
 from paquets     import Paquet, Simulateur
 from moniteur    import Moniteur  
+from securite import RegleFiltrage
 import datetime
 
 
@@ -150,26 +151,26 @@ def menu_afficher_topologie(topologie):
     print("\n" + "-"*15 + " ARCHITECTURE DE LA TOPOLOGIE " + "-"*15)
     topologie.afficher()
     print("-" * 60)
-    input("  Visualisation terminée. Appuyez sur ENTRÉE...")
+    input("   Visualisation terminée. Appuyez sur ENTRÉE...")
 
 
 def menu_envoyer_paquet(simulateur):
     """Envoie un paquet à travers le réseau."""
     print("\n  Protocoles disponibles : TCP | UDP | ICMP")
-    source      = saisir_ip("  IP source      : ")
-    destination = saisir_ip("  IP destination : ")
+    source      = saisir_ip("   IP source      : ")
+    destination = saisir_ip("   IP destination : ")
     
     while True:
-        protocole = saisir_non_vide("  Protocole      : ").upper()
+        protocole = saisir_non_vide("   Protocole      : ").upper()
         if protocole in ["TCP", "UDP", "ICMP"]:
             break
         print("   Protocole invalide. Utilisez uniquement TCP, UDP ou ICMP.")
 
-    taille   = saisir_int("  Taille (octets)  : ", mini=1)
-    priorite = saisir_int("  Priorité (1-5)   : ", mini=1, maxi=5)
+    taille   = saisir_int("   Taille (octets)  : ", mini=1)
+    priorite = saisir_int("   Priorité (1-5)   : ", mini=1, maxi=5)
 
-    nom_source = saisir_non_vide("  Nom équipement source      : ")
-    nom_dest   = saisir_non_vide("  Nom équipement destination : ")
+    nom_source = saisir_non_vide("   Nom équipement source      : ")
+    nom_dest   = saisir_non_vide("   Nom équipement destination : ")
 
     paquet = Paquet(source, destination, protocole, taille, priorite)
     
@@ -183,7 +184,7 @@ def menu_envoyer_paquet(simulateur):
     print("=" * 61)
         
     print("-" * 50)
-    input("  Simulation terminée. Appuyez sur ENTRÉE...")
+    input("   Simulation terminée. Appuyez sur ENTRÉE...")
 
 
 def menu_statistiques(simulateur):
@@ -191,7 +192,7 @@ def menu_statistiques(simulateur):
     print("\n" + "-"*18 + " STATISTIQUES GLOBALES " + "-"*18)
     simulateur.afficher_statistiques()
     print("-" * 59)
-    input("  Appuyez sur ENTRÉE...")
+    input("   Appuyez sur ENTRÉE...")
 
 
 
@@ -230,16 +231,19 @@ def afficher_tableau_bord_externe(moniteur):
 def menu_moniteur(moniteur):
     """Affiche le tableau de bord via la fonction utilitaire externe."""
     afficher_tableau_bord_externe(moniteur)
-    input("\n  Appuyez sur ENTRÉE pour revenir au menu...")
+    input("\n   Appuyez sur ENTRÉE pour revenir au menu...")
 
 
 
 def generer_rapport_moniteur(moniteur):
-    """Génère un fichier texte rapport_simnet.txt avec les données du moniteur."""
+    """Génère un rapport texte complet avec les stats et l'historique des paquets."""
     try:
-        # Extraction sécurisée des données via name mangling
+        # Accès aux attributs privés via name mangling
         stats = moniteur._Moniteur__stats_eq
         liens = moniteur._Moniteur__utilisation_liens
+        
+        # Récupération de l'historique via la méthode existante dans moniteur.py
+        historique = moniteur.get_historique() 
         
         with open("rapport_simnet.txt", "w", encoding="utf-8") as f:
             f.write("=== RAPPORT DE MONITORING SIMNET ===\n")
@@ -258,12 +262,74 @@ def generer_rapport_moniteur(moniteur):
                     f.write(f"Lien {lien}: {octets:.0f} octets\n")
             else:
                 f.write("Aucun trafic enregistré.\n")
+            
+            # --- AJOUT DE L'HISTORIQUE ---
+            f.write("\n--- HISTORIQUE DES 10 DERNIERS PAQUETS ---\n")
+            if historique:
+                for i, paquet_info in enumerate(historique, 1):
+                    f.write(f"{i}. {paquet_info}\n")
+            else:
+                f.write("Aucun paquet traité pour le moment.\n")
         
         print("\n  [SUCCÈS] Rapport 'rapport_simnet.txt' généré avec succès !")
     except Exception as e:
         print(f"\n  [ERREUR] Impossible de générer le rapport : {e}")
 
+def menu_securite(topologie):
+    """Gère la sécurité avec un bloc de protection total contre les erreurs."""
+    print("\n" + "="*30)
+    print("      ADMINISTRATION FIREWALL")
+    print("="*30)
 
+    try:
+        # 1. Vérification : y a-t-il des firewalls ?
+        firewalls = [n for n, e in topologie.equipements.items() if e.__class__.__name__ == "Firewall"]
+        if not firewalls:
+            print("   Aucun Firewall enregistré dans la topologie.")
+            return
+
+        # 2. Saisie et recherche
+        nom_fw = input("  Nom du Firewall : ").strip()
+        eq = topologie.get_equipement(nom_fw)
+        
+        if not eq or eq.__class__.__name__ != "Firewall":
+            print(f"   '{nom_fw}' est introuvable ou n'est pas un Firewall.")
+            return
+
+        # 3. Accès sécurisé au gestionnaire avec gestion d'exception
+        # On tente de trouver l'attribut privé du gestionnaire
+        gestionnaire = getattr(eq, "_Firewall__gestionnaire", None)
+        
+        if gestionnaire is None:
+            print("   Le gestionnaire de sécurité n'est pas actif sur cet équipement.")
+            return
+
+        # Si on arrive ici, tout est OK
+        print(f"\n  -- Gestion Firewall '{nom_fw}' --")
+        print("  1. Ajouter une règle | 2. Afficher les règles | 3. Supprimer une règle")
+        choix = input("  Choix : ")
+        
+        if choix == "1":
+            from securite import RegleFiltrage
+            action = input("  Action (AUTORISER/BLOQUER) : ").upper()
+            ip = input("  IP source (ou Entrée) : ") or None
+            proto = input("  Protocole (TCP/UDP/ICMP ou Entrée) : ") or None
+            gestionnaire.ajouter_regle(RegleFiltrage(action, ip_source=ip, protocole=proto))
+            print("   Règle ajoutée.")
+            
+        elif choix == "2":
+            gestionnaire.afficher_regles()
+            
+        elif choix == "3":
+            idx = int(input("  Index de la règle : "))
+            gestionnaire.supprimer_regle(idx)
+
+    except Exception as e:
+        # ICI : Si une erreur survient (ex: attribut introuvable), ça ne plante plus
+        print(f"\n   Une erreur est survenue lors de l'accès au Firewall : {e}")
+        print("  (Le gestionnaire est peut-être mal initialisé dans la classe Firewall)")
+    
+    input("\n  Appuyez sur ENTRÉE pour revenir...")
 def afficher_menu():
     """Affiche le menu principal étendu."""
     print("\n" + "=" * 50)
@@ -281,6 +347,7 @@ def afficher_menu():
     print("  7. Afficher les statistiques générales")
     print("  8. Afficher le TABLEAU DE BORD (Moniteur)  [NOUVEAU]")
     print("  9. Générer un rapport de monitoring")
+    print("  10. Gérer les règles de sécurité du Firewall")
     print("-"*50)
     print("  0. Quitter")
     print("=" * 50)
@@ -318,6 +385,8 @@ def main():
             menu_moniteur(moniteur)
         elif choix == "9":
              generer_rapport_moniteur(moniteur)
+        elif choix == "10":
+            menu_securite(topologie)
         elif choix == "0":
             print("\n[FIN] Fermeture du simulateur. Au revoir !")
             break
