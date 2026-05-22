@@ -3,21 +3,20 @@ from topologie   import Topologie, Lien
 from paquets     import Paquet, Simulateur
 
 
-
 def saisir_int(message, mini=None, maxi=None):
     """Demande un entier à l'utilisateur avec validation."""
     while True:
         try:
             valeur = int(input(message))
             if mini is not None and valeur < mini:
-                print(f"  Valeur minimale : {mini}")
+                print(f"   Valeur minimale : {mini}")
                 continue
             if maxi is not None and valeur > maxi:
-                print(f"  Valeur maximale : {maxi}")
+                print(f"   Valeur maximale : {maxi}")
                 continue
             return valeur
         except ValueError:
-            print("  Veuillez entrer un nombre entier.")
+            print("   Veuillez entrer un nombre entier.")
 
 
 def saisir_non_vide(message):
@@ -26,11 +25,36 @@ def saisir_non_vide(message):
         valeur = input(message).strip()
         if valeur:
             return valeur
-        print("  Ce champ ne peut pas être vide.")
+        print("   Ce champ ne peut pas être vide.")
+
+
+def saisir_texte_strict(message, longueur_min=2):
+    """Force la saisie d'un texte réel (refuse si c'est uniquement numérique comme '1')."""
+    while True:
+        valeur = input(message).strip()
+        if valeur and not valeur.isdigit() and len(valeur) >= longueur_min:
+            return valeur
+        print(f"   Entrée invalide : Veuillez saisir un texte valide (min {longueur_min} caractères, pas uniquement des chiffres).")
+
+
+def saisir_ip(message):
+    """Force l'utilisateur à saisir une adresse IP strictement valide au format X.X.X.X"""
+    while True:
+        ip = input(message).strip()
+        parties = ip.split('.')
+        if len(parties) == 4:
+            valide = True
+            for partie in parties:
+                if not partie.isdigit() or not (0 <= int(partie) <= 255):
+                    valide = False
+                    break
+            if valide:
+                return ip
+        print("   Format d'adresse IP invalide. Veuillez entrer un format valide (ex: 192.168.1.1).")
 
 
 def menu_ajouter_equipement(topologie):
-    """Ajoute un équipement à la topologie."""
+    """Ajoute un équipement à la topologie avec validations strictes."""
     print("\n  Types disponibles :")
     print("  1. Routeur")
     print("  2. Switch")
@@ -40,9 +64,10 @@ def menu_ajouter_equipement(topologie):
     print("  6. Terminal")
 
     choix = saisir_int("  Votre choix : ", 1, 6)
-    nom    = saisir_non_vide("  Nom       : ")
-    marque = saisir_non_vide("  Marque    : ")
-    ip     = saisir_non_vide("  Adresse IP: ")
+    
+    nom    = saisir_texte_strict("  Nom       : ")
+    marque = saisir_texte_strict("  Marque    : ")
+    ip     = saisir_ip("  Adresse IP: ")
 
     try:
         if choix == 1:
@@ -63,30 +88,38 @@ def menu_ajouter_equipement(topologie):
             eq = Terminal(nom, marque, ip)
 
         topologie.ajouter_equipement(eq)
+        print(f"\n  [SUCCÈS] L'équipement '{nom}' ({marque} - {ip}) a bien été intégré à la topologie !")
 
     except ValueError as e:
-        print(f"  Erreur : {e}")
+        print(f"\n  [ERREUR] Impossible d'ajouter l'équipement : {e}")
+    
+    print("-" * 50)
+    input("  Appuyez sur ENTRÉE pour revenir au menu principal...")
 
 
 def menu_supprimer_equipement(topologie):
     """Supprime un équipement de la topologie."""
     nom = saisir_non_vide("  Nom de l'équipement à supprimer : ")
     topologie.supprimer_equipement(nom)
-
-
+    print(f"\n  [INFO] Ordre de suppression envoyé pour l'équipement : '{nom}'.")
+    print("-" * 50)
+    input("  Appuyez sur ENTRÉE pour revenir au menu principal...")
 
 
 def menu_ajouter_lien(topologie):
-    """Ajoute un lien entre deux équipements."""
+    """Ajoute un lien entre deux équipements avec vérification des entiers."""
     print("\n  Équipements disponibles :")
     for nom in topologie.get_equipements():
         print(f"    - {nom}")
 
-    nom1 = saisir_non_vide("  Équipement 1 : ")
+    nom1 = saisir_non_vide("\n  Équipement 1 : ")
     nom2 = saisir_non_vide("  Équipement 2 : ")
-    bp   = saisir_int("  Bande passante (Mbps) : ", 1)
-    lat  = saisir_int("  Latence (ms)          : ", 1)
+    bp   = saisir_int("  Bande passante (Mbps) : ", mini=1)
+    lat  = saisir_int("  Latence (ms)          : ", mini=0)
     topologie.ajouter_lien(nom1, nom2, bp, lat)
+    print(f"\n  [SUCCÈS] Lien physique établi avec succès entre '{nom1}' et '{nom2}'.")
+    print("-" * 50)
+    input("  Appuyez sur ENTRÉE pour revenir au menu principal...")
 
 
 def menu_supprimer_lien(topologie):
@@ -94,42 +127,64 @@ def menu_supprimer_lien(topologie):
     nom1 = saisir_non_vide("  Équipement 1 : ")
     nom2 = saisir_non_vide("  Équipement 2 : ")
     topologie.supprimer_lien(nom1, nom2)
+    print(f"\n  [INFO] Ordre de coupure du lien entre '{nom1}' et '{nom2}' appliqué.")
+    print("-" * 50)
+    input("  Appuyez sur ENTRÉE pour revenir au menu principal...")
 
 
 def menu_afficher_topologie(topologie):
     """Affiche la topologie complète."""
+    print("\n" + "-"*15 + " ARCHITECTURE DE LA TOPOLOGIE " + "-"*15)
     topologie.afficher()
+    print("-" * 60)
+    input("  Visualisation terminée. Appuyez sur ENTRÉE pour revenir au menu...")
 
 
 def menu_envoyer_paquet(simulateur):
-    """Envoie un paquet à travers le réseau."""
+    """Envoie un paquet à travers le réseau après validation des paramètres d'entrée."""
     print("\n  Protocoles disponibles : TCP | UDP | ICMP")
-    source      = saisir_non_vide("  IP source      : ")
-    destination = saisir_non_vide("  IP destination : ")
-    protocole   = saisir_non_vide("  Protocole      : ").upper()
+    source      = saisir_ip("  IP source      : ")
+    destination = saisir_ip("  IP destination : ")
+    
+    while True:
+        protocole = saisir_non_vide("  Protocole      : ").upper()
+        if protocole in ["TCP", "UDP", "ICMP"]:
+            break
+        print("   Protocole invalide. Utilisez uniquement TCP, UDP ou ICMP.")
 
-    if protocole not in ["TCP", "UDP", "ICMP"]:
-        print("  Protocole invalide. Utilisez TCP, UDP ou ICMP.")
-        return
-
-    taille   = saisir_int("  Taille (octets)  : ", 1)
-    priorite = saisir_int("  Priorité (1-5)   : ", 1, 5)
+    taille   = saisir_int("  Taille (octets)  : ", mini=1)
+    priorite = saisir_int("  Priorité (1-5)   : ", mini=1, maxi=5)
 
     nom_source = saisir_non_vide("  Nom équipement source      : ")
     nom_dest   = saisir_non_vide("  Nom équipement destination : ")
 
     paquet = Paquet(source, destination, protocole, taille, priorite)
-    simulateur.envoyer_paquet(paquet, nom_source, nom_dest)
+    
+    print("\n" + "="*15 + " DÉBUT DE LA SIMULATION RÉSEAU " + "="*15)
+    
+    # Sécurisation contre les équipements sources/destinations introuvables
+    try:
+        simulateur.envoyer_paquet(paquet, nom_source, nom_dest)
+    except KeyError as e:
+        print(f"\n   ERREUR DE ROUTAGE : L'équipement {e} n'existe pas dans la topologie actuelle.")
+        print("  Vérifiez les noms saisis ou affichez la topologie (Option 5) pour contrôler.")
+    except Exception as e:
+        print(f"\n   ERREUR INCONNUE lors de la simulation : {e}")
 
-
+    print("=" * 61)
+        
+    print("-" * 50)
+    input("  Simulation terminée. Appuyez sur ENTRÉE pour revenir au menu principal...")
 def menu_statistiques(simulateur):
     """Affiche les statistiques de simulation."""
+    print("\n" + "-"*18 + " STATISTIQUES GLOBALES " + "-"*18)
     simulateur.afficher_statistiques()
-
+    print("-" * 59)
+    input("  Appuyez sur ENTRÉE pour revenir au menu principal...")
 
 
 def afficher_menu():
-    """Affiche le menu principal."""
+    """Affiche le menu principal d'origine."""
     print("\n" + "=" * 50)
     print("       SIMNet — Simulateur de Réseau")
     print("=" * 50)
@@ -175,10 +230,10 @@ def main():
         elif choix == "7":
             menu_statistiques(simulateur)
         elif choix == "0":
-            print("Au revoir !")
+            print("\n[FIN] Fermeture du simulateur. Au revoir !")
             break
         else:
-            print("Choix invalide. Veuillez saisir un nombre entre 0 et 7.")
+            print(" Choix invalide. Veuillez saisir un nombre entre 0 et 7.")
 
 
 if __name__ == "__main__":
