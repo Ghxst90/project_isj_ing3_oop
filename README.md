@@ -104,9 +104,9 @@ dépôt officiel `st9-8/project_isj_ing3_oop`.
 |--------|-------------|-------|
 | 1 — Modélisation | Équipements réseau, topologie, liens |Terminé|
 | 2 — Trafic | Paquets, routage saut par saut, statistiques |Terminé|
-| 3 — Sécurité | Firewall, règles de filtrage, journal horodaté |En cours|
-| 4 — Surveillance | Moniteur réseau, métriques, export rapport |En cours|
-| 5 — Interface | Menu console interactif |En cours|
+| 3 — Sécurité | Firewall, règles de filtrage, journal horodaté |Terminé|
+| 4 — Surveillance | Moniteur réseau, métriques, export rapport |Terminé|
+| 5 — Interface | Menu console interactif |Terminé|
 
 ---
 
