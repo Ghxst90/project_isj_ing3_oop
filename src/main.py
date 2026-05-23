@@ -2,7 +2,7 @@ from equipements import Routeur, Switch, Serveur, Firewall, PointAccesWifi, Term
 from topologie   import Topologie, Lien
 from paquets     import Paquet, Simulateur
 from moniteur    import Moniteur  
-from securite import RegleFiltrage
+from securite import GestionnaireFirewall, RegleFiltrage
 import datetime
 
 
@@ -98,8 +98,10 @@ def menu_ajouter_equipement(topologie):
             eq = Serveur(nom, marque, ip)
         elif choix == 4:
             login = saisir_identifiant_strict("  Login admin   : ", "Le login", longueur_min=4)
-            mdp   = saisir_mot_de_passe_strict("  Mot de passe  : ", longueur_min=6)
+            mdp   = saisir_mot_de_passe_strict("  Mot de passe  : ", longueur_min=8)
             eq = Firewall(nom, marque, ip, login, mdp)
+            gestionnaire = GestionnaireFirewall(eq)
+            eq._Firewall__gestionnaire = gestionnaire
         elif choix == 5:
             ssid  = saisir_identifiant_strict("  SSID (Nom Wi-Fi) : ", "Le SSID", longueur_min=3)
             canal = saisir_int("  Canal (1-13)     : ", 1, 13)
@@ -226,7 +228,7 @@ def afficher_tableau_bord_externe(moniteur):
         print('\n--- Équipements ---')
         if stats:
             for nom, s in stats.items():
-                print(f"  [✓] {nom:20s}  transmis={s['transmis']}  perdus={s['perdus']}")
+                print(f"   {nom:20s}  transmis={s['transmis']}  perdus={s['perdus']}")
         else:
             print('  (Aucune statistique d\'équipement disponible)')
 
@@ -294,53 +296,66 @@ def menu_securite(topologie):
     print("="*30)
 
     try:
-        # 1. Vérification : y a-t-il des firewalls ?
-        firewalls = [n for n, e in topologie.equipements.items() if e.__class__.__name__ == "Firewall"]
+        firewalls = [n for n, e in topologie.get_equipements().items() if e.__class__.__name__ == "Firewall"]
         if not firewalls:
             print("   Aucun Firewall enregistré dans la topologie.")
+            input("   Appuyez sur ENTRÉE pour revenir...")
             return
 
-        # 2. Saisie et recherche
         nom_fw = input("  Nom du Firewall : ").strip()
-        eq = topologie.get_equipement(nom_fw)
-        
+        eq = topologie.get_equipements().get(nom_fw)
+
         if not eq or eq.__class__.__name__ != "Firewall":
             print(f"   '{nom_fw}' est introuvable ou n'est pas un Firewall.")
+            input("   Appuyez sur ENTRÉE pour revenir...")
             return
 
-        # 3. Accès sécurisé au gestionnaire avec gestion d'exception
-        # On tente de trouver l'attribut privé du gestionnaire
         gestionnaire = getattr(eq, "_Firewall__gestionnaire", None)
-        
+
         if gestionnaire is None:
             print("   Le gestionnaire de sécurité n'est pas actif sur cet équipement.")
+            input("   Appuyez sur ENTRÉE pour revenir...")
             return
 
-        # Si on arrive ici, tout est OK
         print(f"\n  -- Gestion Firewall '{nom_fw}' --")
         print("  1. Ajouter une règle | 2. Afficher les règles | 3. Supprimer une règle")
-        choix = input("  Choix : ")
-        
+        choix = input("  Choix : ").strip()
+
         if choix == "1":
-            from securite import RegleFiltrage
+            login = input("  Login admin    : ").strip()
+            mdp = input("  Mot de passe   : ").strip()
+            if not gestionnaire.authentifier(login, mdp):
+                input("  Appuyez sur ENTRÉE pour revenir...")
+                return
+
             action = input("  Action (AUTORISER/BLOQUER) : ").upper()
-            ip = input("  IP source (ou Entrée) : ") or None
-            proto = input("  Protocole (TCP/UDP/ICMP ou Entrée) : ") or None
+            ip = input("  IP source (ou Entrée pour ignorer) : ").strip() or None
+            proto = input("  Protocole TCP/UDP/ICMP (ou Entrée pour ignorer) : ").strip() or None
             gestionnaire.ajouter_regle(RegleFiltrage(action, ip_source=ip, protocole=proto))
             print("   Règle ajoutée.")
-            
+            gestionnaire.deconnecter()
+
         elif choix == "2":
             gestionnaire.afficher_regles()
-            
+
         elif choix == "3":
-            idx = int(input("  Index de la règle : "))
+            login = input("  Login admin    : ").strip()
+            mdp = input("  Mot de passe   : ").strip()
+            if not gestionnaire.authentifier(login, mdp):
+                input("  Appuyez sur ENTRÉE pour revenir...")
+                return
+
+            idx = saisir_int("  Index de la règle à supprimer : ", mini=0)
             gestionnaire.supprimer_regle(idx)
+            gestionnaire.deconnecter()
+
+        else:
+            print("   Choix invalide.")
 
     except Exception as e:
-        # ICI : Si une erreur survient (ex: attribut introuvable), ça ne plante plus
         print(f"\n   Une erreur est survenue lors de l'accès au Firewall : {e}")
         print("  (Le gestionnaire est peut-être mal initialisé dans la classe Firewall)")
-    
+
     input("\n  Appuyez sur ENTRÉE pour revenir...")
 def afficher_menu():
     """Affiche le menu principal étendu."""
