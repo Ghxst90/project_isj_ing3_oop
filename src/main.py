@@ -31,6 +31,7 @@ def saisir_non_vide(message):
         print("  Ce champ ne peut pas être vide.")
 
 
+
 def saisir_texte_strict(message, longueur_min=2):
     """Force la saisie d'un texte réel (refuse si c'est uniquement numérique)."""
     while True:
@@ -154,12 +155,12 @@ def menu_afficher_topologie(topologie):
     input("   Visualisation terminée. Appuyez sur ENTRÉE...")
 
 
-def menu_envoyer_paquet(simulateur):
-    """Envoie un paquet à travers le réseau."""
+def menu_envoyer_paquet(simulateur, moniteur):
+    """Envoie un paquet à travers le réseau et notifie le moniteur."""
     print("\n  Protocoles disponibles : TCP | UDP | ICMP")
     source      = saisir_ip("   IP source      : ")
     destination = saisir_ip("   IP destination : ")
-    
+
     while True:
         protocole = saisir_non_vide("   Protocole      : ").upper()
         if protocole in ["TCP", "UDP", "ICMP"]:
@@ -173,7 +174,10 @@ def menu_envoyer_paquet(simulateur):
     nom_dest   = saisir_non_vide("   Nom équipement destination : ")
 
     paquet = Paquet(source, destination, protocole, taille, priorite)
-    
+
+    # Taille de l'historique AVANT l'envoi
+    taille_avant = len(simulateur.get_historique())
+
     print("\n" + "="*15 + " DÉBUT DE LA SIMULATION RÉSEAU " + "="*15)
     try:
         simulateur.envoyer_paquet(paquet, nom_source, nom_dest)
@@ -182,7 +186,19 @@ def menu_envoyer_paquet(simulateur):
     except Exception as e:
         print(f"\n   ERREUR INCONNUE : {e}")
     print("=" * 61)
-        
+
+    # Vérifier si un nouveau paquet a été ajouté à l'historique
+    historique = simulateur.get_historique()
+    if len(historique) > taille_avant:
+        # Le dernier paquet ajouté
+        statut, dernier_paquet = historique[-1]
+        if statut == "OK":
+            moniteur.enregistrer_paquet('OK', dernier_paquet, [nom_source, nom_dest])
+        else:
+            moniteur.enregistrer_paquet('PERDU', dernier_paquet)
+    else:
+        moniteur.enregistrer_paquet('PERDU', paquet)
+
     print("-" * 50)
     input("   Simulation terminée. Appuyez sur ENTRÉE...")
 
@@ -193,7 +209,6 @@ def menu_statistiques(simulateur):
     simulateur.afficher_statistiques()
     print("-" * 59)
     input("   Appuyez sur ENTRÉE...")
-
 
 
 
@@ -229,48 +244,45 @@ def afficher_tableau_bord_externe(moniteur):
 
 
 def menu_moniteur(moniteur):
-    """Affiche le tableau de bord via la fonction utilitaire externe."""
-    afficher_tableau_bord_externe(moniteur)
+    moniteur.afficher_tableau_bord()
     input("\n   Appuyez sur ENTRÉE pour revenir au menu...")
 
 
 
-def generer_rapport_moniteur(moniteur):
-    """Génère un rapport texte complet avec les stats et l'historique des paquets."""
+def generer_rapport_moniteur(moniteur, simulateur):
+    """Génère un fichier texte rapport_simnet.txt avec les données du moniteur."""
     try:
-        # Accès aux attributs privés via name mangling
+        # Extraction sécurisée des données via name mangling
         stats = moniteur._Moniteur__stats_eq
         liens = moniteur._Moniteur__utilisation_liens
-        
-        # Récupération de l'historique via la méthode existante dans moniteur.py
-        historique = moniteur.get_historique() 
-        
+        historique = simulateur.get_historique()
+
         with open("rapport_simnet.txt", "w", encoding="utf-8") as f:
             f.write("=== RAPPORT DE MONITORING SIMNET ===\n")
             f.write(f"Date du rapport : {datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n\n")
-            
+
             f.write("--- STATISTIQUES ÉQUIPEMENTS ---\n")
             if stats:
                 for nom, s in stats.items():
                     f.write(f"Équipement: {nom} | Transmis: {s['transmis']} | Perdus: {s['perdus']}\n")
             else:
                 f.write("Aucune donnée.\n")
-                
+
             f.write("\n--- UTILISATION DES LIENS ---\n")
             if liens:
                 for lien, octets in liens.items():
                     f.write(f"Lien {lien}: {octets:.0f} octets\n")
             else:
                 f.write("Aucun trafic enregistré.\n")
-            
-            # --- AJOUT DE L'HISTORIQUE ---
-            f.write("\n--- HISTORIQUE DES 10 DERNIERS PAQUETS ---\n")
-            if historique:
-                for i, paquet_info in enumerate(historique, 1):
-                    f.write(f"{i}. {paquet_info}\n")
+
+            f.write("\n--- 10 DERNIERS PAQUETS ---\n")
+            derniers = historique[-10:]
+            if derniers:
+                for statut, paquet in derniers:
+                    f.write(f"[{statut}] {paquet}\n")
             else:
-                f.write("Aucun paquet traité pour le moment.\n")
-        
+                f.write("Aucun paquet transmis.\n")
+
         print("\n  [SUCCÈS] Rapport 'rapport_simnet.txt' généré avec succès !")
     except Exception as e:
         print(f"\n  [ERREUR] Impossible de générer le rapport : {e}")
@@ -378,13 +390,13 @@ def main():
         elif choix == "5":
             menu_afficher_topologie(topologie)
         elif choix == "6":
-            menu_envoyer_paquet(simulateur)
+            menu_envoyer_paquet(simulateur,moniteur)
         elif choix == "7":
             menu_statistiques(simulateur)
         elif choix == "8":
             menu_moniteur(moniteur)
         elif choix == "9":
-             generer_rapport_moniteur(moniteur)
+            generer_rapport_moniteur(moniteur, simulateur)
         elif choix == "10":
             menu_securite(topologie)
         elif choix == "0":
