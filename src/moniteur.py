@@ -103,3 +103,27 @@ class Moniteur:
             print('  (aucun paquet)')
 
         print('\n' + '=' * 55 + '\n')
+
+
+def generer_rapport(self, chemin_fichier='rapport_simnet.txt'):
+        """Génère le rapport d'exploitation et l'exporte."""
+        maintenant = datetime.datetime.now()
+        duree = maintenant - self.__debut
+ 
+        lignes = []
+        lignes.append('=' * 60)
+        lignes.append('         RAPPORT D\'EXPLOITATION — SIMNet')
+        lignes.append('=' * 60)
+        lignes.append(f"  Généré le : {maintenant.strftime('%d/%m/%Y à %H:%M:%S')}")
+        lignes.append(f"  Durée de session : {str(duree).split('.')[0]}")
+        lignes.append('')
+        # ... (sections détaillées — voir code complet) ...
+ 
+        contenu = '\n'.join(lignes)
+        try:
+            with open(chemin_fichier, 'w', encoding='utf-8') as f:
+                f.write(contenu)
+            print(f'[MONITEUR] Rapport exporté : {chemin_fichier}')
+        except OSError as e:
+            print(f'[MONITEUR] Erreur d\'écriture : {e}')
+        return contenu
