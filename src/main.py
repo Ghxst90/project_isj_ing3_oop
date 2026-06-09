@@ -362,17 +362,17 @@ def afficher_menu():
     print("\n" + "=" * 50)
     print("       SIMNet — Simulateur de Réseau")
     print("=" * 50)
-    print("  -- Équipements --")
+    print(" \n -- Équipements --")
     print("  1. Ajouter un équipement")
     print("  2. Supprimer un équipement")
-    print("  -- Topologie --")
+    print("  \n-- Topologie --")
     print("  3. Ajouter un lien")
     print("  4. Supprimer un lien")
     print("  5. Afficher la topologie")
-    print("  -- Simulation & Métriques --")
+    print(" \n -- Simulation & Métriques --")
     print("  6. Envoyer un paquet")
     print("  7. Afficher les statistiques générales")
-    print("  8. Afficher le TABLEAU DE BORD (Moniteur)  [NOUVEAU]")
+    print("  8. Afficher le tableau de bord du moniteur")
     print("  9. Générer un rapport de monitoring")
     print("  10. Gérer les règles de sécurité du Firewall")
     print("-"*50)
@@ -385,7 +385,7 @@ def main():
     topologie  = Topologie()
     simulateur = Simulateur(topologie)
     
-    # Initialisation du moniteur réseau avec les instances requises
+
     moniteur = Moniteur(topologie, simulateur)
 
     print("Bienvenue dans SIMNet — Simulateur de Réseau Intelligent")
@@ -418,7 +418,7 @@ def main():
             print("\n[FIN] Fermeture du simulateur. Au revoir !")
             break
         else:
-            print(" Choix invalide. Veuillez saisir un nombre entre 0 et 9.")
+            print(" Choix invalide. Veuillez saisir un nombre entre 0 et 10.")
 
 
 if __name__ == "__main__":
