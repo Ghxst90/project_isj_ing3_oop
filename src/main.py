@@ -425,6 +425,8 @@ def main():
             break
         else:
             print(" Choix invalide. Veuillez saisir un nombre entre 0 et 10.")
+            input("  Appuyez sur ENTRÉE pour revenir...")
+            continue
 
 
 if __name__ == "__main__":
