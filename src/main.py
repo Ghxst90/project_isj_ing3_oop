@@ -4,6 +4,11 @@ from paquets     import Paquet, Simulateur
 from moniteur    import Moniteur  
 from securite import GestionnaireFirewall, RegleFiltrage
 import datetime
+import os
+
+def effacer_ecran():
+    """Efface le terminal (Windows et Linux/Mac)."""
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def saisir_int(message, mini=None, maxi=None):
@@ -359,6 +364,7 @@ def menu_securite(topologie):
     input("\n  Appuyez sur ENTRÉE pour revenir...")
 def afficher_menu():
     """Affiche le menu principal étendu."""
+    effacer_ecran()
     print("\n" + "=" * 50)
     print("       SIMNet — Simulateur de Réseau")
     print("=" * 50)
